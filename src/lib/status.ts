@@ -38,7 +38,7 @@ export function isWhaleAtRisk(lastOrderDate: string | null): boolean {
   return differenceInDays(new Date(), new Date(lastOrderDate)) >= 30;
 }
 
-export const STATUS_LABEL: Record = {
+export const STATUS_LABEL: Record<CustomerStatus, string> = {
   New:          "New",
   Active:       "Active",
   Reactivation: "Reactivation",
@@ -47,7 +47,7 @@ export const STATUS_LABEL: Record = {
   Inactive:     "Inactive",
 };
 
-export const STATUS_COLOR: Record = {
+export const STATUS_COLOR: Record<CustomerStatus, string> = {
   New:          "bg-green-100 text-green-800",
   Active:       "bg-blue-100 text-blue-800",
   Reactivation: "bg-purple-100 text-purple-800",
