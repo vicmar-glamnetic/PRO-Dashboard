@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { searchCRM, REP_MAP } from "@/lib/hubspot";
 import { getCustomerStatus, isApproachingChurn } from "@/lib/status";
-import { differenceInDays, subDays } from "date-fns";
+import { differenceInDays, subDays, format } from "date-fns";
 
 export async function GET(request: Request) {
   try {
@@ -10,18 +10,14 @@ export async function GET(request: Request) {
   const endDate   = searchParams.get("endDate");
 
   // Default: contacts whose last order was 90–150 days ago (churn window)
-  const cutoffMs    = startDate
-    ? new Date(startDate).getTime()
-    : subDays(new Date(), 150).getTime();
-  const thresholdMs = endDate
-    ? new Date(endDate).getTime() + 86399999
-    : subDays(new Date(), 90).getTime();
+  const cutoff    = startDate ?? format(subDays(new Date(), 150), "yyyy-MM-dd");
+  const threshold = endDate   ?? format(subDays(new Date(), 90),  "yyyy-MM-dd");
 
   const data = await searchCRM("contacts", {
     filterGroups: [{
       filters: [
-        { propertyName: "last_order_date", operator: "GTE", value: cutoffMs.toString() },
-        { propertyName: "last_order_date", operator: "LTE", value: thresholdMs.toString() },
+        { propertyName: "last_order_date", operator: "GTE", value: cutoff },
+        { propertyName: "last_order_date", operator: "LTE", value: threshold },
       ],
     }],
     properties: [
