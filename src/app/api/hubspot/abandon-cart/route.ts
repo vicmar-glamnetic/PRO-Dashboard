@@ -1,11 +1,23 @@
 import { NextResponse } from "next/server";
 import { searchCRM, REP_MAP } from "@/lib/hubspot";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+  const { searchParams } = new URL(request.url);
+  const startDate = searchParams.get("startDate");
+  const endDate   = searchParams.get("endDate");
+
+  const dateFilters = startDate && endDate ? [
+    { propertyName: "hs_abandoned_at", operator: "GTE", value: new Date(startDate).getTime().toString() },
+    { propertyName: "hs_abandoned_at", operator: "LTE", value: new Date(endDate + "T23:59:59").getTime().toString() },
+  ] : [];
+
   const data = await searchCRM("carts", {
     filterGroups: [{
-      filters: [{ propertyName: "hs_cart_status", operator: "EQ", value: "abandoned" }],
+      filters: [
+        { propertyName: "hs_cart_status", operator: "EQ", value: "abandoned" },
+        ...dateFilters,
+      ],
     }],
     properties: [
       "hs_cart_value", "hs_abandoned_at", "hs_line_items",

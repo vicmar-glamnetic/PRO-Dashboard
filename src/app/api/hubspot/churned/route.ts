@@ -3,10 +3,15 @@ import { searchCRM, REP_MAP } from "@/lib/hubspot";
 import { getCustomerStatus, isApproachingChurn } from "@/lib/status";
 import { differenceInDays, subDays, format } from "date-fns";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-  const cutoff = format(subDays(new Date(), 150), "yyyy-MM-dd");
-  const threshold = format(subDays(new Date(), 90), "yyyy-MM-dd");
+  const { searchParams } = new URL(request.url);
+  const startDate = searchParams.get("startDate");
+  const endDate   = searchParams.get("endDate");
+
+  // Default: contacts whose last order was 90–150 days ago (churn window)
+  const cutoff    = startDate ?? format(subDays(new Date(), 150), "yyyy-MM-dd");
+  const threshold = endDate   ?? format(subDays(new Date(), 90),  "yyyy-MM-dd");
 
   const data = await searchCRM("contacts", {
     filterGroups: [{

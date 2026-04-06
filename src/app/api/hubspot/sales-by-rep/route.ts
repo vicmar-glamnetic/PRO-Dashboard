@@ -2,11 +2,24 @@ import { NextResponse } from "next/server";
 import { searchCRM, REP_MAP } from "@/lib/hubspot";
 import { getCustomerStatus } from "@/lib/status";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-  // Fetch all contacts with order data
+  const { searchParams } = new URL(request.url);
+  const startDate = searchParams.get("startDate");
+  const endDate   = searchParams.get("endDate");
+
+  const dateFilters = startDate && endDate ? [
+    { propertyName: "last_order_date", operator: "GTE", value: startDate },
+    { propertyName: "last_order_date", operator: "LTE", value: endDate },
+  ] : [];
+
   const data = await searchCRM("contacts", {
-    filterGroups: [{ filters: [{ propertyName: "num_associated_deals", operator: "GT", value: "0" }] }],
+    filterGroups: [{
+      filters: [
+        { propertyName: "num_associated_deals", operator: "GT", value: "0" },
+        ...dateFilters,
+      ],
+    }],
     properties: [
       "hubspot_owner_id", "total_revenue", "num_associated_deals",
       "last_order_date", "first_order_date",

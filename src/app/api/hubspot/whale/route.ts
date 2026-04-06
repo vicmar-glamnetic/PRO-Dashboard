@@ -5,12 +5,22 @@ import { differenceInDays } from "date-fns";
 
 const WHALE_LTV_THRESHOLD = 2500;
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+  const { searchParams } = new URL(request.url);
+  const startDate = searchParams.get("startDate");
+  const endDate   = searchParams.get("endDate");
+
+  const dateFilters = startDate && endDate ? [
+    { propertyName: "last_order_date", operator: "GTE", value: startDate },
+    { propertyName: "last_order_date", operator: "LTE", value: endDate },
+  ] : [];
+
   const data = await searchCRM("contacts", {
     filterGroups: [{
       filters: [
         { propertyName: "total_revenue", operator: "GTE", value: String(WHALE_LTV_THRESHOLD) },
+        ...dateFilters,
       ],
     }],
     properties: [
@@ -32,7 +42,6 @@ export async function GET() {
     const lastOrder = p.last_order_date;
     const days = lastOrder ? differenceInDays(new Date(), new Date(lastOrder)) : null;
 
-    // Tier assignment
     const tier = ltv >= 10000 ? "Platinum" : ltv >= 5000 ? "Gold" : "Silver";
 
     return {
