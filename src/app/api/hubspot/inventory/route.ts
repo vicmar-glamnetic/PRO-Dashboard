@@ -7,19 +7,21 @@ export async function GET(request: Request) {
   const startDate = searchParams.get("startDate");
   const endDate   = searchParams.get("endDate");
 
-  const dateFilters = startDate && endDate ? [
-    { propertyName: "createdate", operator: "GTE", value: new Date(startDate).getTime().toString() },
-    { propertyName: "createdate", operator: "LTE", value: new Date(endDate + "T23:59:59").getTime().toString() },
-  ] : [];
+  const start = startDate ? new Date(startDate).getTime() : null;
+  const end   = endDate   ? new Date(endDate).getTime() + 86399999 : null;
 
   const data = await searchCRM("products", {
-    filterGroups: dateFilters.length ? [{ filters: dateFilters }] : [],
+    filterGroups: [],
     properties: ["name", "price", "hs_sku", "description", "hs_cost_of_goods_sold"],
     sorts: [{ propertyName: "name", direction: "ASCENDING" }],
     limit: 100,
   });
 
-  const products = data.results ?? [];
+  const products = (data.results ?? []).filter((p: any) => {
+    if (start === null || end === null) return true;
+    const t = p.properties.createdate ? new Date(p.properties.createdate).getTime() : null;
+    return t !== null && t >= start && t <= end;
+  });
   return NextResponse.json({ count: products.length, products });
   } catch (err) {
     console.error("[inventory]", err);

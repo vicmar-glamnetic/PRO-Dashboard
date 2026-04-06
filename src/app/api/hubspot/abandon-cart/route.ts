@@ -7,16 +7,13 @@ export async function GET(request: Request) {
   const startDate = searchParams.get("startDate");
   const endDate   = searchParams.get("endDate");
 
-  const dateFilters = startDate && endDate ? [
-    { propertyName: "hs_abandoned_at", operator: "GTE", value: new Date(startDate).getTime().toString() },
-    { propertyName: "hs_abandoned_at", operator: "LTE", value: new Date(endDate + "T23:59:59").getTime().toString() },
-  ] : [];
+  const start = startDate ? new Date(startDate).getTime() : null;
+  const end   = endDate   ? new Date(endDate).getTime() + 86399999 : null;
 
   const data = await searchCRM("carts", {
     filterGroups: [{
       filters: [
         { propertyName: "hs_cart_status", operator: "EQ", value: "abandoned" },
-        ...dateFilters,
       ],
     }],
     properties: [
@@ -28,7 +25,11 @@ export async function GET(request: Request) {
     limit: 100,
   });
 
-  const carts = (data.results ?? []).map((c: any) => {
+  const carts = (data.results ?? []).filter((c: any) => {
+    if (start === null || end === null) return true;
+    const t = c.properties.hs_abandoned_at ? new Date(c.properties.hs_abandoned_at).getTime() : null;
+    return t !== null && t >= start && t <= end;
+  }).map((c: any) => {
     const p = c.properties;
     const abandonedAt = p.hs_abandoned_at;
     const hoursSince = abandonedAt
