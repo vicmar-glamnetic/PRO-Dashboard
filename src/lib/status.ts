@@ -18,10 +18,13 @@ export function getCustomerStatus(lastOrderDate: string | null): CustomerStatus 
   return "Inactive";
 }
 
-export function getLtvTier(ltv: number): "<$500" | "$500–$2K" | "$2K+" {
-  if (ltv < 500)   return "<$500";
-  if (ltv < 2000)  return "$500–$2K";
-  return "$2K+";
+export type LTVTier = "whale" | "high" | "mid" | "low";
+
+export function getLtvTier(ltv: number): LTVTier {
+  if (ltv >= 10000) return "whale";
+  if (ltv >= 2500)  return "high";
+  if (ltv >= 500)   return "mid";
+  return "low";
 }
 
 export function isApproachingChurn(lastOrderDate: string | null): boolean {
