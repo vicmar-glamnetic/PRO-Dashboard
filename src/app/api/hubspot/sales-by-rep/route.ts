@@ -84,7 +84,8 @@ export async function GET(request: Request) {
 
   return NextResponse.json(result);
   } catch (err) {
-    console.error("[sales-by-rep]", err);
-    return NextResponse.json({ error: "Failed to fetch sales data" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[sales-by-rep]", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
