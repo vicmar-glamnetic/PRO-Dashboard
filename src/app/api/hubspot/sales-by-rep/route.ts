@@ -9,8 +9,8 @@ export async function GET(request: Request) {
   const endDate   = searchParams.get("endDate");
 
   const dateFilters = startDate && endDate ? [
-    { propertyName: "last_order_date", operator: "GTE", value: startDate },
-    { propertyName: "last_order_date", operator: "LTE", value: endDate },
+    { propertyName: "last_order_date", operator: "GTE", value: new Date(startDate).getTime().toString() },
+    { propertyName: "last_order_date", operator: "LTE", value: (new Date(endDate).getTime() + 86399999).toString() },
   ] : [];
 
   const data = await searchCRM("contacts", {
