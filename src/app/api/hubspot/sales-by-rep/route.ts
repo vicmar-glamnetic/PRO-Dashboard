@@ -8,16 +8,13 @@ export async function GET(request: Request) {
   const startDate = searchParams.get("startDate");
   const endDate   = searchParams.get("endDate");
 
-  const dateFilters = startDate && endDate ? [
-    { propertyName: "last_order_date", operator: "GTE", value: startDate },
-    { propertyName: "last_order_date", operator: "LTE", value: endDate },
-  ] : [];
+  const start = startDate ? new Date(startDate).getTime() : null;
+  const end   = endDate   ? new Date(endDate).getTime() + 86399999 : null;
 
   const data = await searchCRM("contacts", {
     filterGroups: [{
       filters: [
         { propertyName: "num_associated_deals", operator: "GT", value: "0" },
-        ...dateFilters,
       ],
     }],
     properties: [
@@ -32,6 +29,10 @@ export async function GET(request: Request) {
 
   for (const c of data.results ?? []) {
     const p = c.properties;
+    if (start !== null && end !== null) {
+      const t = p.last_order_date ? new Date(p.last_order_date).getTime() : null;
+      if (!t || t < start || t > end) continue;
+    }
     const ownerId = p.hubspot_owner_id;
     const repName = REP_MAP[ownerId] ?? "Unassigned";
     if (!repStats[repName]) {

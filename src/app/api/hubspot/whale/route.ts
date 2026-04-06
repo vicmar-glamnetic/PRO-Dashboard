@@ -11,16 +11,13 @@ export async function GET(request: Request) {
   const startDate = searchParams.get("startDate");
   const endDate   = searchParams.get("endDate");
 
-  const dateFilters = startDate && endDate ? [
-    { propertyName: "last_order_date", operator: "GTE", value: startDate },
-    { propertyName: "last_order_date", operator: "LTE", value: endDate },
-  ] : [];
+  const start = startDate ? new Date(startDate).getTime() : null;
+  const end   = endDate   ? new Date(endDate).getTime() + 86399999 : null;
 
   const data = await searchCRM("contacts", {
     filterGroups: [{
       filters: [
         { propertyName: "total_revenue", operator: "GTE", value: String(WHALE_LTV_THRESHOLD) },
-        ...dateFilters,
       ],
     }],
     properties: [
@@ -33,7 +30,11 @@ export async function GET(request: Request) {
     limit: 100,
   });
 
-  const whales = (data.results ?? []).map((c: any) => {
+  const whales = (data.results ?? []).filter((c: any) => {
+    if (start === null || end === null) return true;
+    const t = c.properties.last_order_date ? new Date(c.properties.last_order_date).getTime() : null;
+    return t !== null && t >= start && t <= end;
+  }).map((c: any) => {
     const p = c.properties;
     const ltv = parseFloat(p.total_revenue ?? "0");
     const last90 = parseFloat(p.revenue_last_90_days ?? "0");
